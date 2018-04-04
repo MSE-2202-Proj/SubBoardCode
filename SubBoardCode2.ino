@@ -4,9 +4,13 @@ SoftwareSerial IRSensor(A3, A3);
 int lightSensor_int = 0;
 int lightCorrectCounter = 0;
 int lightTotalCounter = 0;
-
 bool vowelCondition = 0; // 0:A,E. 1:I,O.
 
+//Check vowel types
+bool AE = false;
+bool IO = false;
+bool doOnce = false;
+unsigned long oldMillis = 0;
 void setup() {
   // put your setup code here, to run once:
   
@@ -14,11 +18,12 @@ Serial.begin(9600);
 
 
 IRSensor.begin(2400);
-pinMode(A0, OUTPUT); //Use these in set up. It's important
+pinMode(2, OUTPUT); //Use these in set up. It's important
 pinMode(A3, INPUT);
 pinMode(3, INPUT);
 
 digitalWrite(3, HIGH);
+digitalWrite(2, LOW);
 
 }
 
@@ -32,9 +37,9 @@ void loop() {
 //If it turns out you actually have to read the message, I can figure out this a little more. 
 
 lightSensor_int = IRSensor.read();
-
+//Serial.println(lightSensor_int);
 vowelCondition = digitalRead(3);
-
+/*
 //Serial.print(lightSensor_int);    
 //Serial.print("\n");
 
@@ -46,36 +51,68 @@ Serial.print(lightCorrectCounter);
 
 Serial.print("                    ");
 Serial.print(vowelCondition);
+*/
 
 
-
-if (lightTotalCounter != 0) {
+//if (lightTotalCounter != 0) {
   
 
-  if((lightSensor_int == 65 || lightSensor_int == 69) && vowelCondition) {
-  lightCorrectCounter += 1;
-
+  if(((lightSensor_int == 65) || (lightSensor_int == 69)) && vowelCondition) {
+  AE = true;
+  IO = false;
+  //Serial.println("-AE");
+   /*
   Serial.print("                    ");
 Serial.print("1");
+  */
   }
 
   if((lightSensor_int == 79 || lightSensor_int == 73) && !vowelCondition) {
-   lightCorrectCounter  += 1; 
-
+    AE = false;
+    IO = true;
+    //Serial.println("-IO");
+   /*
+   /ightCorrectCounter  += 1; 
      Serial.print("                    ");
-Serial.print("2");
+     Serial.print("2");
+  */
   }
 
-  lightTotalCounter += 1;
+  //lightTotalCounter += 1;
   
-}
+//}
 
-if(lightSensor_int != (-1) && lightTotalCounter == 0) {
-  analogWrite(A0, 1023);
-  lightTotalCounter += 1; 
+  if((lightSensor_int != (-1))&&(!doOnce)) {
+    digitalWrite(2, HIGH);
+    //Serial.println("ONCE");
+    //Serial.println(vowelCondition);
+    doOnce = true;
+  }
+  if(lightSensor_int != (-1)){
+    if((vowelCondition)&&(AE)){
+      digitalWrite(2, HIGH);
+      //Serial.println("FOUND");
+      oldMillis = millis();
+    }
+      else if ((!vowelCondition)&&(IO)){
+        digitalWrite(2, HIGH);
+        //Serial.println("FOUND");
+        oldMillis = millis();
+      }
+      else{
+        digitalWrite(2, LOW);
+        //Serial.println("LOST");
+        doOnce = false;
+      }
+  }
+  else{
+    if(millis()-oldMillis >= 1000){
+      digitalWrite(2,LOW);
+      //Serial.println("LOST");
+    }
   }
 
-
+/*
 if(lightTotalCounter == 100) {
   
   if (lightCorrectCounter >= 5) {
@@ -89,13 +126,8 @@ if(lightTotalCounter == 100) {
     lightCorrectCounter = 0;
     analogWrite(A0, 0);
     }
-  
-
-
-
 }
-
-
+*/
 
 }
 
